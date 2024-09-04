@@ -24,14 +24,14 @@ def add_email(request):
 #         exists = False
 #     return Response({'exists': exists, }, status=status.HTTP_200_OK)
 
-@api_view(['DELETE'])
-def delete_email(request, email):
-    try:
-        email_access = EmailAccess.objects.get(email=email)
-    except EmailAccess.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)  
-    email_access.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+# @api_view(['DELETE'])
+# def delete_email(request, email):
+#     try:
+#         email_access = EmailAccess.objects.get(email=email)
+#     except EmailAccess.DoesNotExist:
+#         return Response(status=status.HTTP_404_NOT_FOUND)  
+#     email_access.delete()
+#     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 from django.utils import timezone
@@ -49,3 +49,21 @@ def check_email(request, email):
         exists = False
 
     return Response({'exists': exists}, status=status.HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+def delete_email(request, email):
+    expiry_date = request.query_params.get('expiry_date', None)
+
+    try:
+        if expiry_date:
+            email_access = EmailAccess.objects.get(email=email, expiry_date=expiry_date)
+        else:
+            email_access = EmailAccess.objects.get(email=email)
+        
+    except EmailAccess.DoesNotExist:
+        return Response({"error": "Email entry not found."}, status=status.HTTP_404_NOT_FOUND)
+    
+    email_access.delete()
+    # return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response({"success": "Email entry deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
