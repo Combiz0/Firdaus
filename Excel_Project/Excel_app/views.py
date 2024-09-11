@@ -57,13 +57,17 @@ def delete_email(request, email):
 
     try:
         if expiry_date:
-            email_access = EmailAccess.objects.get(email=email, expiry_date=expiry_date)
+            # Use filter to handle cases where there might be multiple records
+            email_access = EmailAccess.objects.filter(email=email, expiry_date=expiry_date).first()
         else:
-            email_access = EmailAccess.objects.get(email=email)
+            email_access = EmailAccess.objects.filter(email=email).first()
         
-    except EmailAccess.DoesNotExist:
-        return Response({"error": "Email entry not found."}, status=status.HTTP_404_NOT_FOUND)
+        if not email_access:
+            return Response({"error": "Email entry not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        email_access.delete()
+        return Response({"success": "Email entry deleted successfully."}, status=status.HTTP_200_OK)
     
-    email_access.delete()
-    # return Response(status=status.HTTP_204_NO_CONTENT)
-    return Response({"success": "Email entry deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+    except Exception as e:
+        # Log the exception if needed
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
